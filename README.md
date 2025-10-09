@@ -6,11 +6,11 @@
 
 ## 🌟 Highlights
 
-✨ **Secure Process Isolation** — Uses Linux **namespaces**, **cgroups**, and **seccomp filters** for robust sandboxing
-⚙️ **Smart Resource Management** — Dynamically allocates and monitors CPU, memory, and I/O resources
-🧮 **Deadlock Prevention** — Implements the proven **Banker’s Algorithm** for safe resource allocation
-📊 **Real-Time Monitoring** — Interactive **CLI tools** and an optional **Flask-based dashboard**
-🎓 **Built for Learning** — Ideal for **Operating Systems** coursework and academic research
+* ✨ **Secure Process Isolation** — Uses Linux **namespaces**, **cgroups**, and **seccomp filters** for robust sandboxing
+* ⚙️ **Smart Resource Management** — Dynamically allocates and monitors CPU, memory, and I/O resources
+* 🧮 **Deadlock Prevention** — Implements the proven **Banker’s Algorithm** for safe resource allocation
+* 📊 **Real-Time Monitoring** — Interactive **CLI tools** and an optional **Flask-based dashboard**
+* 🎓 **Built for Learning** — Ideal for **Operating Systems** coursework and academic research
 
 ---
 
@@ -36,3 +36,7 @@
 | **Unit Tests & Documentation** | Complete testing and academic documentation.          |
 
 ---
+
+<p align="center">
+  💡 *Developed with dedication by Team Ananta (B.Tech CSE, 3rd Year)* 💡
+</p>
