@@ -1,0 +1,57 @@
+quick show — cgroups + metrics + optimization (3–4 min)
+======================================================
+
+0) Open two terminals at project root
+   cd "/mnt/c/Users/Admin/Desktop/Operating System/pbl os/SafeBox"
+
+1) Start backend API (Terminal A)
+   ./scripts/run_backend.sh
+   # Purpose: serves REST /api/v1/status and WS /ws/metrics
+
+2) Build agent if needed (Terminal B)
+   ./scripts/build_agent.sh
+   # Purpose: compile C++ cgroup manager
+
+3) Create sandbox and set limits (Terminal B)
+   sudo ./build/safebox_cgroup create sandbox
+   sudo ./build/safebox_cgroup mem.set sandbox 512000000     # 512 MB
+   sudo ./build/safebox_cgroup cpu.set sandbox 50000 100000  # 50% CPU
+   cat /sys/fs/cgroup/sandbox/memory.max
+   cat /sys/fs/cgroup/sandbox/cpu.max
+   # Purpose: define resource domain and caps
+
+4) Add a process to the sandbox (Terminal B)
+   yes > /dev/null & echo $! > /tmp/demo.pid
+   sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/demo.pid)"
+   grep "$(cat /tmp/demo.pid)" /sys/fs/cgroup/sandbox/cgroup.procs
+   # Purpose: move PID into cgroup so limits apply
+
+5) Show metrics (Browser or Terminal B)
+   Browser: http://localhost:8000/api/v1/status
+   or
+   curl -s http://localhost:8000/api/v1/status | jq '.resource_utilization, .system_load'
+   # Purpose: prove monitoring works and shows utilization
+
+6) Prove resource management (optional quick memory demo)
+   python3 - <<'PY' & echo $! > /tmp/mem.pid
+import time; a = bytearray(400*1024*1024); time.sleep(20)
+PY
+   sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/mem.pid)"
+   cat /sys/fs/cgroup/sandbox/memory.current
+   # Purpose: memory usage rises under 512 MB cap
+
+7) Run optimization (Terminal B)
+   curl -s -X POST http://localhost:8000/api/v1/optimize | jq
+   curl -s http://localhost:8000/api/v1/status | jq '.cgroup.cpu_max, .resource_utilization'
+   # Purpose: show auto-tuned cpu.max/memory.max and updated metrics
+
+8) Cleanup (if asked)
+   kill "$(cat /tmp/demo.pid)" 2>/dev/null || true
+   kill "$(cat /tmp/mem.pid)" 2>/dev/null || true
+
+Talking points (one-liners)
+ - Adding a process = writing its PID to cgroup.procs via our CLI.
+ - Limits are group-wide: memory.max and cpu.max constrain all PIDs inside.
+ - Backend exposes current metrics and a simple optimizer to adjust limits.
+
+

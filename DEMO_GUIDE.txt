@@ -1,0 +1,100 @@
+SafeBox Demo Guide — Proving cgroups, Monitoring, and Optimization
+=================================================================
+
+Audience Goal
+  Show that SafeBox enforces resource limits with cgroups v2, reports real-time metrics, and can auto-tune limits.
+
+Environment
+  - Ubuntu/WSL2 with cgroups v2 (unified). Verify with: mount | grep cgroup2
+  - From project root: /mnt/c/Users/Admin/Desktop/Operating System/pbl os/SafeBox
+
+1) Verify prerequisites (what: ensure kernel and tools are ready)
+   - sudo apt update
+   - sudo apt install -y build-essential cmake python3-venv python3-pip jq pidstat stress-ng websocat
+   - mount | grep cgroup2
+
+2) Build the C++ cgroup CLI (what: compile manager used to create/limit/attach)
+   - chmod +x scripts/build_agent.sh
+   - ./scripts/build_agent.sh
+   - ls -l build/safebox_cgroup
+
+3) Start backend API (what: exposes REST/WS for monitoring and optimizer)
+   - chmod +x scripts/run_backend.sh
+   - ./scripts/run_backend.sh
+   - Leave it running; it serves http://localhost:8000
+
+4) Create sandbox cgroup and set limits (what: establish resource domain and caps)
+   - In a new terminal, at project root:
+     sudo ./build/safebox_cgroup create sandbox
+     sudo ./build/safebox_cgroup mem.set sandbox 512000000      # 512 MB cap
+     sudo ./build/safebox_cgroup cpu.set sandbox 50000 100000   # 50% CPU quota
+   - Confirm:
+     cat /sys/fs/cgroup/sandbox/memory.max
+     cat /sys/fs/cgroup/sandbox/cpu.max
+
+5) Attach one workload (what: place a process into the sandbox)
+   - yes > /dev/null & echo $! > /tmp/w1.pid
+   - sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/w1.pid)"
+   - grep "$(cat /tmp/w1.pid)" /sys/fs/cgroup/sandbox/cgroup.procs
+
+6) Observe monitoring via REST (what: verify metrics API is live and accurate)
+   - curl -s http://localhost:8000/api/v1/status | jq '.resource_utilization, .system_load'
+   - Expect fields: memory_usage_ratio, cpu_limit_ratio, plus cgroup stats
+
+7) Add more processes (what: show group-level limits shared by multiple PIDs)
+   - for i in 2 3; do (yes > /dev/null & echo $! > "/tmp/w$i.pid"); done
+   - for i in 2 3; do sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/w$i.pid)"; done
+   - wc -l /sys/fs/cgroup/sandbox/cgroup.procs  # number of threads/processes
+
+8) Demonstrate CPU throttling (what: CPU usage constrained near 50%)
+   - pidstat -u 1 10 -p "$(cat /tmp/w1.pid)"   # watch utilization
+   - Optional: raise to ~80% and observe change
+     sudo ./build/safebox_cgroup cpu.set sandbox 80000 100000
+
+9) Demonstrate memory cap (what: allocations stay under 512 MB cap)
+   - python3 - <<'PY' & echo $! > /tmp/mem.pid
+import time; a = bytearray(400*1024*1024); time.sleep(60)
+PY
+   - sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/mem.pid)"
+   - cat /sys/fs/cgroup/sandbox/memory.current
+   - Optional: attempt 700 MB and check for pressure/kill
+     python3 - <<'PY' & echo $! > /tmp/mem2.pid
+import time; a = bytearray(700*1024*1024); time.sleep(60)
+PY
+     sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/mem2.pid)"
+     dmesg | tail -n 50 | grep -i oom || true
+
+10) Show real-time stream (what: live telemetry over WebSocket)
+    - websocat ws://localhost:8000/ws/metrics
+    - Or browser console:
+      new WebSocket('ws://localhost:8000/ws/metrics').onmessage = e => console.log(JSON.parse(e.data))
+
+11) Run optimizer (what: auto-tune limits based on simple policy)
+    - curl -s -X POST http://localhost:8000/api/v1/optimize | jq
+    - Verify changes reflected in /sys/fs/cgroup/sandbox/cpu.max and API output
+
+12) Browser view (what: friendly inspection without curl)
+    - http://localhost:8000/api/v1/status  (use a JSON Viewer extension)
+    - http://localhost:8000/docs           (interactive Swagger UI)
+
+12.1) Add processes to the sandbox (what: place one or many PIDs into the cgroup)
+    - Start a new process and attach it:
+      yes > /dev/null & echo $! > /tmp/demo.pid
+      sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/demo.pid)"
+    - Attach an existing process by PID:
+      pgrep -f "python my_app.py" | head -n1 > /tmp/target.pid
+      sudo ./build/safebox_cgroup attach sandbox "$(cat /tmp/target.pid)"
+    - Attach multiple PIDs:
+      for p in 1111 2222 3333; do sudo ./build/safebox_cgroup attach sandbox "$p"; done
+    - Verify membership any time:
+      cat /sys/fs/cgroup/sandbox/cgroup.procs
+
+13) Cleanup (what: leave system tidy)
+    - for i in w1 w2 w3 mem mem2; do pidfile="/tmp/$i.pid"; [ -f "$pidfile" ] && kill "$(cat "$pidfile")" 2>/dev/null || true; done
+
+Talking points
+  - cgroups v2 enforces group-level CPU and memory limits (files: memory.max, cpu.max).
+  - All attached PIDs share the same budget; scheduler throttles them collectively.
+  - Backend exposes REST and WebSocket metrics; optimizer adjusts limits automatically.
+
+
