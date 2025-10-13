@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeBox - Banker's Algorithm Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #818cf8;
+            --secondary: #8b5cf6;
+            --success: #10b981;
+            --success-light: #34d399;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --dark: #0f172a;
+            --dark-light: #1e293b;
+            --gray: #64748b;
+            --light: #f1f5f9;
+            --white: #ffffff;
+            --border: #e2e8f0;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 30px 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: var(--white);
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-xl);
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.9) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        h1 {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -1px;
+        }
+
+        .subtitle {
+            color: var(--gray);
+            font-size: 1.1em;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .controls-section {
+            background: var(--white);
+            padding: 28px;
+            margin-bottom: 30px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 14px;
+        }
+
+        button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 0.95em;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        button:active {
+            transform: translateY(-1px);
+        }
+
+        button.btn-success {
+            background: linear-gradient(135deg, var(--success) 0%, var(--success-light) 100%);
+        }
+
+        button.btn-warning {
+            background: linear-gradient(135deg, var(--warning) 0%, #fbbf24 100%);
+        }
+
+        button.btn-danger {
+            background: linear-gradient(135deg, var(--danger) 0%, #dc2626 100%);
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--white);
+            padding: 28px;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border);
+            margin-bottom: 30px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card h2 {
+            color: var(--dark);
+            font-size: 1.5em;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1em;
+            box-shadow: var(--shadow);
+        }
+
+        .status-badge::before {
+            content: '';
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-safe {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 2px solid var(--success);
+        }
+
+        .status-safe::before {
+            background: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-unsafe {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border: 2px solid var(--danger);
+        }
+
+        .status-unsafe::before {
+            background: var(--danger);
+            box-shadow: 0 0 10px var(--danger);
+        }
+
+        .info-box {
+            background: linear-gradient(135deg, var(--light) 0%, #e2e8f0 100%);
+            padding: 18px;
+            border-radius: 12px;
+            margin: 15px 0;
+            border-left: 5px solid var(--primary);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 6px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .info-value {
+            color: var(--gray);
+            font-size: 1.1em;
+            font-weight: 500;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 18px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 14px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px) scale(1.02);
+        }
+
+        .stat-value {
+            font-size: 3em;
+            font-weight: 800;
+            margin: 10px 0;
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            font-weight: 500;
+            opacity: 0.95;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin: 15px 0;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+
+        th, td {
+            padding: 14px 16px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--dark) 0%, var(--dark-light) 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 0.8px;
+        }
+
+        td {
+            background: white;
+            border-bottom: 1px solid var(--border);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        tr:hover td {
+            background: var(--light);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .resource-bar-container {
+            margin: 18px 0;
+        }
+
+        .resource-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .resource-bar {
+            width: 100%;
+            height: 28px;
+            background: var(--light);
+            border-radius: 14px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .resource-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%);
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .resource-bar-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.95em;
+            color: var(--dark);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 10px;
+            font-size: 0.95em;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+            background: var(--white);
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .message {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin: 18px 0;
+            font-size: 0.95em;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message-success {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border-left: 5px solid var(--success);
+        }
+
+        .message-error {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border-left: 5px solid var(--danger);
+        }
+
+        .message-info {
+            background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+            color: #1e40af;
+            border-left: 5px solid var(--primary);
+        }
+
+        .history-container {
+            max-height: 420px;
+            overflow-y: auto;
+            padding-right: 8px;
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: var(--light);
+            border-radius: 10px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .history-item {
+            background: var(--light);
+            padding: 14px 16px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary);
+            font-size: 0.9em;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+
+        .history-time {
+            color: var(--gray);
+            font-size: 0.8em;
+            margin-top: 6px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--white);
+            padding: 35px;
+            border-radius: 16px;
+            max-width: 550px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 18px;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        .modal-header h3 {
+            font-size: 1.6em;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .close-modal {
+            background: var(--light);
+            border: none;
+            font-size: 1.8em;
+            cursor: pointer;
+            color: var(--gray);
+            padding: 0;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover {
+            background: var(--danger);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            font-weight: 700;
+            color: var(--dark);
+            margin: 25px 0 12px 0;
+            padding-left: 12px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray);
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 1200px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .stat-value {
+                font-size: 2.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SafeBox Dashboard</h1>
+            <p class="subtitle">Real-Time Banker's Algorithm & Deadlock Prevention System</p>
+        </header>
+
+        <div class="controls-section">
+            <div class="controls-grid">
+                <button onclick="initializeSystem()">Initialize System</button>
+                <button onclick="showModal('addProcessModal')" class="btn-success">Add Process</button>
+                <button onclick="showModal('requestModal')">Request Resources</button>
+                <button onclick="showModal('releaseModal')" class="btn-warning">Release Resources</button>
+                <button onclick="loadExample()">Load Example</button>
+                <button onclick="checkDeadlock()">Check Deadlock</button>
+                <button onclick="refreshState()">Refresh State</button>
+                <button onclick="resetSystem()" class="btn-danger">Reset System</button>
+            </div>
+        </div>
+
+        <div class="main-grid">
+            <div>
+                <div class="card">
+                    <h2>System Status</h2>
+                    <div id="systemStatus"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Resource Allocation</h2>
+                    <div id="resourceData"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Process Information</h2>
+                    <div id="processData"></div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <h2>Statistics</h2>
+                    <div id="statistics"></div>
+                </div>
+
+                <div class="card">
+                    <h2>Activity History</h2>
+                    <div class="history-container" id="historyLog"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="initModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Initialize System</h3>
+                <button class="close-modal" onclick="closeModal('initModal')">&times;</button>
+            </div>
+            <form onsubmit="submitInit(event)">
+                <div class="form-group">
+                    <label class="form-label">Number of Resources</label>
+                    <input type="number" id="numResources" min="1" max="10" value="3" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Available Resources (comma-separated)</label>
+                    <input type="text" id="availableResources" placeholder="10, 5, 7" required>
+                </div>
+                <button type="submit" style="width: 100%;">Initialize</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="addProcessModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add Process</h3>
+                <button class="close-modal" onclick="closeModal('addProcessModal')">&times;</button>
+            </div>
+            <form onsubmit="submitAddProcess(event)">
+                <div class="form-group">
+                    <label class="form-label">Process Name</label>
+                    <input type="text" id="processName" placeholder="P1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Maximum Resources (comma-separated)</label>
+                    <input type="text" id="maxResources" placeholder="7, 5, 3" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Allocated Resources (comma-separated)</label>
+                    <input type="text" id="allocatedResources" placeholder="0, 1, 0" required>
+                </div>
+                <button type="submit" class="btn-success" style="width: 100%;">Add Process</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="requestModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Request Resources</h3>
+                <button class="close-modal" onclick="closeModal('requestModal')">&times;</button>
+            </div>
+            <form onsubmit="submitRequest(event)">
+                <div class="form-group">
+                    <label class="form-label">Process Name</label>
+                    <input type="text" id="requestProcess" placeholder="P1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Requested Resources (comma-separated)</label>
+                    <input type="text" id="requestResources" placeholder="1, 0, 2" required>
+                </div>
+                <button type="submit" style="width: 100%;">Submit Request</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="releaseModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Release Resources</h3>
+                <button class="close-modal" onclick="closeModal('releaseModal')">&times;</button>
+            </div>
+            <form onsubmit="submitRelease(event)">
+                <div class="form-group">
+                    <label class="form-label">Process Name</label>
+                    <input type="text" id="releaseProcess" placeholder="P1" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Resources to Release (comma-separated)</label>
+                    <input type="text" id="releaseResources" placeholder="1, 0, 2" required>
+                </div>
+                <button type="submit" class="btn-warning" style="width: 100%;">Release Resources</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let messageTimeout;
+
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.classList.remove('active');
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            clearTimeout(messageTimeout);
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${type}`;
+            messageDiv.textContent = message;
+            
+            const container = document.querySelector('.container');
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            messageTimeout = setTimeout(() => {
+                messageDiv.remove();
+            }, 5000);
+        }
+
+        function parseArray(str) {
+            return str.split(',').map(x => parseInt(x.trim()));
+        }
+
+        async function initializeSystem() {
+            showModal('initModal');
+        }
+
+        async function submitInit(event) {
+            event.preventDefault();
+            const numResources = parseInt(document.getElementById('numResources').value);
+            const available = parseArray(document.getElementById('availableResources').value);
+            
+            try {
+                const response = await fetch('/api/init', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ num_resources: numResources, available })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    closeModal('initModal');
+                    refreshState();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to initialize system', 'error');
+            }
+        }
+
+        async function submitAddProcess(event) {
+            event.preventDefault();
+            const process_name = document.getElementById('processName').value;
+            const max_resources = parseArray(document.getElementById('maxResources').value);
+            const allocated = parseArray(document.getElementById('allocatedResources').value);
+            
+            try {
+                const response = await fetch('/api/add-process', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ process_name, max_resources, allocated })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    closeModal('addProcessModal');
+                    refreshState();
+                    document.getElementById('processName').value = '';
+                    document.getElementById('maxResources').value = '';
+                    document.getElementById('allocatedResources').value = '';
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to add process', 'error');
+            }
+        }
+
+        async function submitRequest(event) {
+            event.preventDefault();
+            const process_name = document.getElementById('requestProcess').value;
+            const request = parseArray(document.getElementById('requestResources').value);
+            
+            try {
+                const response = await fetch('/api/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ process_name, request })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    closeModal('requestModal');
+                    refreshState();
+                    document.getElementById('requestProcess').value = '';
+                    document.getElementById('requestResources').value = '';
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to process request', 'error');
+            }
+        }
+
+        async function submitRelease(event) {
+            event.preventDefault();
+            const process_name = document.getElementById('releaseProcess').value;
+            const release = parseArray(document.getElementById('releaseResources').value);
+            
+            try {
+                const response = await fetch('/api/release', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ process_name, release })
+                });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    closeModal('releaseModal');
+                    refreshState();
+                    document.getElementById('releaseProcess').value = '';
+                    document.getElementById('releaseResources').value = '';
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to release resources', 'error');
+            }
+        }
+
+        async function loadExample() {
+            try {
+                const response = await fetch('/api/load-example', { method: 'POST' });
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showMessage(data.message, 'success');
+                    refreshState();
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to load example', 'error');
+            }
+        }
+
+        async function checkDeadlock() {
+            try {
+                const response = await fetch('/api/check-deadlock');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const message = data.has_deadlock 
+                        ? `Deadlock detected! Processes: ${data.deadlocked_processes.join(', ')}`
+                        : 'No deadlock detected. System is safe.';
+                    showMessage(message, data.has_deadlock ? 'error' : 'success');
+                } else {
+                    showMessage(data.error, 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to check deadlock', 'error');
+            }
+        }
+
+        async function resetSystem() {
+            if (confirm('Are you sure you want to reset the system?')) {
+                try {
+                    const response = await fetch('/api/reset', { method: 'POST' });
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        showMessage(data.message, 'info');
+                        refreshState();
+                    } else {
+                        showMessage(data.error, 'error');
+                    }
+                } catch (error) {
+                    showMessage('Failed to reset system', 'error');
+                }
+            }
+        }
+
+        async function refreshState() {
+            try {
+                const response = await fetch('/api/state');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateUI(data);
+                } else {
+                    showMessage('Failed to fetch system state', 'error');
+                }
+            } catch (error) {
+                showMessage('Failed to refresh state', 'error');
+            }
+        }
+
+        function updateUI(data) {
+            updateSystemStatus(data);
+            updateResourceData(data);
+            updateProcessData(data);
+            updateStatistics(data);
+            updateHistory(data);
+        }
+
+        function updateSystemStatus(data) {
+            const statusDiv = document.getElementById('systemStatus');
+            
+            if (!data.initialized) {
+                statusDiv.innerHTML = `
+                    <div class="empty-state">
+                        <p>System not initialized. Click "Initialize System" to begin.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const isSafe = data.is_safe;
+            const statusClass = isSafe ? 'status-safe' : 'status-unsafe';
+            const statusText = isSafe ? 'SAFE STATE' : 'UNSAFE STATE';
+
+            let html = `
+                <div class="status-badge ${statusClass}">${statusText}</div>
+                <div class="info-box">
+                    <div class="info-label">Total Processes</div>
+                    <div class="info-value">${data.num_processes}</div>
+                </div>
+            `;
+
+            if (isSafe && data.safe_sequence) {
+                html += `
+                    <div class="info-box">
+                        <div class="info-label">Safe Sequence</div>
+                        <div class="info-value">${data.safe_sequence.join(' → ')}</div>
+                    </div>
+                `;
+            }
+
+            statusDiv.innerHTML = html;
+        }
+
+        function updateResourceData(data) {
+            const resourceDiv = document.getElementById('resourceData');
+            
+            if (!data.initialized || !data.available) {
+                resourceDiv.innerHTML = '<p class="empty-state">No resource data available</p>';
+                return;
+            }
+
+            let html = '<div class="section-title">Available Resources</div>';
+            
+            data.available.forEach((avail, idx) => {
+                const total = data.total_resources ? data.total_resources[idx] : avail;
+                const used = total - avail;
+                const percentage = total > 0 ? (used / total * 100).toFixed(1) : 0;
+                
+                html += `
+                    <div class="resource-bar-container">
+                        <div class="resource-label">
+                            <span>Resource ${idx}</span>
+                            <span>${used} / ${total} used</span>
+                        </div>
+                        <div class="resource-bar">
+                            <div class="resource-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            resourceDiv.innerHTML = html;
+        }
+
+        function updateProcessData(data) {
+            const processDiv = document.getElementById('processData');
+            
+            if (!data.initialized || !data.processes || data.processes.length === 0) {
+                processDiv.innerHTML = '<p class="empty-state">No processes added yet</p>';
+                return;
+            }
+
+            let html = `
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Process</th>
+                            <th>Allocated</th>
+                            <th>Maximum</th>
+                            <th>Need</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            data.processes.forEach(process => {
+                html += `
+                    <tr>
+                        <td><strong>${process.name}</strong></td>
+                        <td>${process.allocated.join(', ')}</td>
+                        <td>${process.max.join(', ')}</td>
+                        <td>${process.need.join(', ')}</td>
+                    </tr>
+                `;
+            });
+
+            html += '</tbody></table>';
+            processDiv.innerHTML = html;
+        }
+
+        function updateStatistics(data) {
+            const statsDiv = document.getElementById('statistics');
+            
+            const stats = data.stats || {
+                total_requests: 0,
+                successful_requests: 0,
+                denied_requests: 0,
+                success_rate: 0
+            };
+
+            statsDiv.innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">${data.num_processes || 0}</div>
+                        <div class="stat-label">Processes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total_requests}</div>
+                        <div class="stat-label">Total Requests</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.successful_requests}</div>
+                        <div class="stat-label">Successful</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.success_rate.toFixed(1)}%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function updateHistory(data) {
+            const historyDiv = document.getElementById('historyLog');
+            
+            if (!data.history || data.history.length === 0) {
+                historyDiv.innerHTML = '<p class="empty-state">No activity history yet</p>';
+                return;
+            }
+
+            let html = '';
+            data.history.slice().reverse().forEach(item => {
+                html += `
+                    <div class="history-item">
+                        <div>${item.action}</div>
+                        <div class="history-time">${item.timestamp}</div>
+                    </div>
+                `;
+            });
+
+            historyDiv.innerHTML = html;
+        }
+
+        refreshState();
+        setInterval(refreshState, 5000);
+    </script>
+</body>
+</html>

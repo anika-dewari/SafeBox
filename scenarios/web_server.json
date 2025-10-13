@@ -1,0 +1,36 @@
+{
+  "name": "Example Web Server Scenario",
+  "description": "Simulates resource allocation for web servers, database, and cache",
+  "steps": [
+    {
+      "action": "request",
+      "pid": 0,
+      "resources": [2, 2, 1],
+      "description": "WebServer requests CPU, Memory, Disk"
+    },
+    {
+      "action": "request",
+      "pid": 1,
+      "resources": [1, 1, 1],
+      "description": "Database requests resources"
+    },
+    {
+      "action": "request",
+      "pid": 2,
+      "resources": [3, 0, 1],
+      "description": "Cache requests CPU and Disk"
+    },
+    {
+      "action": "release",
+      "pid": 0,
+      "resources": [1, 1, 0],
+      "description": "WebServer releases some resources"
+    },
+    {
+      "action": "request",
+      "pid": 3,
+      "resources": [1, 1, 1],
+      "description": "Worker requests resources"
+    }
+  ]
+}

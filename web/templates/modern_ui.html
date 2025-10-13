@@ -1,0 +1,108 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeBox - Banker''s Algorithm Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #2563eb; --secondary: #1e40af; --success: #059669;
+            --danger: #dc2626; --warning: #d97706; --dark: #1f2937;
+            --light: #f9fafb; --border: #e5e7eb; --shadow: rgba(0, 0, 0, 0.1);
+        }
+        body { font-family: ''Poppins'', ''Trebuchet MS'', sans-serif; background: #f3f4f6; color: var(--dark); line-height: 1.6; }
+        .container { max-width: 1600px; margin: 0 auto; padding: 20px; }
+        header { background: white; padding: 30px; margin-bottom: 30px; border-bottom: 3px solid var(--primary); box-shadow: 0 2px 8px var(--shadow); }
+        h1 { color: var(--dark); font-size: 2.2em; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.5px; }
+        .subtitle { color: #6b7280; font-size: 1em; font-weight: 400; }
+        .author { margin-top: 12px; color: var(--primary); font-weight: 500; font-size: 0.95em; }
+        .controls-section { background: white; padding: 25px; margin-bottom: 25px; border-radius: 8px; box-shadow: 0 1px 3px var(--shadow); }
+        .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+        button { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; font-size: 0.9em; font-weight: 500; font-family: ''Poppins'', sans-serif; transition: all 0.2s ease; box-shadow: 0 1px 2px var(--shadow); }
+        button:hover { background: var(--secondary); transform: translateY(-1px); box-shadow: 0 4px 6px var(--shadow); }
+        button.btn-success { background: var(--success); }
+        button.btn-success:hover { background: #047857; }
+        button.btn-warning { background: var(--warning); }
+        button.btn-warning:hover { background: #b45309; }
+        button.btn-danger { background: var(--danger); }
+        button.btn-danger:hover { background: #b91c1c; }
+        .main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 25px; margin-bottom: 25px; }
+        .card { background: white; padding: 25px; border-radius: 8px; box-shadow: 0 1px 3px var(--shadow); }
+        .card h2 { color: var(--dark); font-size: 1.3em; font-weight: 600; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid var(--border); }
+        .status-badge { display: inline-block; padding: 8px 16px; border-radius: 6px; font-weight: 500; font-size: 0.95em; }
+        .status-safe { background: #d1fae5; color: var(--success); border: 1px solid var(--success); }
+        .status-unsafe { background: #fee2e2; color: var(--danger); border: 1px solid var(--danger); }
+        .info-box { background: var(--light); padding: 16px; border-radius: 6px; margin: 15px 0; border-left: 4px solid var(--primary); }
+        .info-label { font-weight: 500; color: var(--dark); margin-bottom: 4px; }
+        .info-value { color: #6b7280; font-size: 0.95em; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin: 20px 0; }
+        .stat-card { background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 2px 4px var(--shadow); }
+        .stat-value { font-size: 2.5em; font-weight: 700; margin: 8px 0; }
+        .stat-label { font-size: 0.85em; font-weight: 400; opacity: 0.95; }
+        table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.9em; }
+        th { background: var(--light); color: var(--dark); font-weight: 600; text-transform: uppercase; font-size: 0.8em; letter-spacing: 0.5px; }
+        tr:hover { background: var(--light); }
+        .resource-bar-container { margin: 15px 0; }
+        .resource-label { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.9em; font-weight: 500; }
+        .resource-bar { width: 100%; height: 24px; background: var(--border); border-radius: 12px; overflow: hidden; position: relative; }
+        .resource-bar-fill { height: 100%; background: linear-gradient(90deg, var(--success) 0%, var(--primary) 100%); transition: width 0.3s ease; border-radius: 12px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; margin-bottom: 6px; font-weight: 500; font-size: 0.9em; color: var(--dark); }
+        input, select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.9em; font-family: ''Poppins'', sans-serif; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1); }
+        .message { padding: 14px 16px; border-radius: 6px; margin: 15px 0; font-size: 0.9em; font-weight: 500; }
+        .message-success { background: #d1fae5; color: var(--success); border-left: 4px solid var(--success); }
+        .message-error { background: #fee2e2; color: var(--danger); border-left: 4px solid var(--danger); }
+        .message-info { background: #dbeafe; color: var(--primary); border-left: 4px solid var(--primary); }
+        .history-container { max-height: 400px; overflow-y: auto; }
+        .history-item { background: var(--light); padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 3px solid var(--primary); font-size: 0.85em; }
+        .history-time { color: #6b7280; font-size: 0.8em; margin-top: 4px; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 30px; border-radius: 8px; max-width: 500px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid var(--border); }
+        .modal-header h3 { font-size: 1.4em; font-weight: 600; color: var(--dark); }
+        .close-modal { background: none; border: none; font-size: 1.8em; cursor: pointer; color: #6b7280; padding: 0; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+        .close-modal:hover { background: var(--light); color: var(--dark); }
+        .section-title { font-size: 1.1em; font-weight: 600; color: var(--dark); margin: 20px 0 10px 0; }
+        .empty-state { text-align: center; padding: 40px 20px; color: #9ca3af; }
+        @media (max-width: 1200px) { .main-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { .controls-grid { grid-template-columns: 1fr; } .stats-grid { grid-template-columns: 1fr 1fr; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <h1>SafeBox Dashboard</h1>
+                <p class="subtitle">Banker''s Algorithm - Deadlock Prevention System</p>
+                <p class="author">Developed by: Ritika</p>
+            </div>
+        </header>
+        <div class="controls-section">
+            <div class="controls-grid">
+                <button onclick="initializeSystem()">Initialize System</button>
+                <button onclick="showModal(''addProcessModal'')" class="btn-success">Add Process</button>
+                <button onclick="showModal(''requestModal'')">Request Resources</button>
+                <button onclick="showModal(''releaseModal'')" class="btn-warning">Release Resources</button>
+                <button onclick="loadExample()">Load Example</button>
+                <button onclick="checkDeadlock()">Check Deadlock</button>
+                <button onclick="refreshState()">Refresh State</button>
+                <button onclick="resetSystem()" class="btn-danger">Reset System</button>
+            </div>
+        </div>
+        <div class="main-grid">
+            <div>
+                <div class="card"><h2>System Status</h2><div id="systemStatus"></div></div>
+                <div class="card" style="margin-top: 25px;"><h2>Resource Allocation</h2><div id="resourceData"></div></div>
+                <div class="card" style="margin-top: 25px;"><h2>Process Information</h2><div id="processData"></div></div>
+            </div>
+            <div>
+                <div class="card"><h2>Statistics</h2><div id="statistics"></div></div>
+                <div class="card" style="margin-top: 25px;"><h2>Activity History</h2><div class="history-container" id="historyLog"></div></div>
+            </div>
+        </div>
+    </div>
