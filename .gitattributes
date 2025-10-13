@@ -1,0 +1,4 @@
+# Normalize line endings to LF in repo; keep binary files untouched
+* text=auto eol=lf
+
+
