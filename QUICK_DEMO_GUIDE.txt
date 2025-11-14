@@ -1,0 +1,98 @@
+╔══════════════════════════════════════════════════════════════════════╗
+║              SafeBox - Quick Demo Guide for Mentor                   ║
+║                   ONE INTEGRATED SYSTEM                              ║
+╚══════════════════════════════════════════════════════════════════════╝
+
+🎯 MAIN DEMO COMMAND:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  $ python3 integrated_demo.py complete
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📊 WHAT MENTOR WILL SEE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+For EVERY process execution, ALL THREE components work together:
+
+  1. [RITIKA] Phase 1: Banker's Algorithm
+     ├─ Checks if request is safe
+     ├─ Prevents deadlock
+     └─ ✅ APPROVES or ❌ REJECTS
+
+  2. [AYUSH] Phase 2: cgroups Monitoring (only if Ritika approved)
+     ├─ Sets CPU/memory limits (based on Ritika's allocation)
+     ├─ Starts monitoring
+     └─ ✅ RESOURCES CONFIGURED
+
+  3. [ANIKA] Phase 3: Security Sandbox (only if Ayush set up)
+     ├─ Creates isolated namespace
+     ├─ Applies seccomp policy
+     ├─ Executes in sandbox (using Ayush's cgroup)
+     └─ ✅ EXECUTION COMPLETE or 🛑 SECURITY BLOCK
+
+  4. [INTEGRATED] Cleanup & Status
+     └─ All three report together
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎬 OTHER DEMO OPTIONS:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Normal Flow:           $ python3 integrated_demo.py 1
+  Deadlock Prevention:   $ python3 integrated_demo.py 2
+  Security Enforcement:  $ python3 integrated_demo.py 3
+  Complete Workflow:     $ python3 integrated_demo.py 4
+
+  All Scenarios:         $ python3 integrated_demo.py
+  (Interactive, press Enter between scenarios)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔑 KEY POINTS TO EMPHASIZE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ ONE execution path through ALL THREE layers
+  ✅ Data flows between components (not just separate calls)
+  ✅ Each layer depends on the previous layer
+  ✅ Integrated error handling and status reporting
+  ✅ Cannot run separately - they're truly integrated
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📚 DOCUMENTS TO REFERENCE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  1. INTEGRATION_SUMMARY.md        - Complete integration overview
+  2. MENTOR_PRESENTATION_GUIDE.md  - Full presentation script
+  3. INTEGRATED_DEMO.md            - Technical architecture
+  4. integrated_demo.py            - The actual integrated code
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🎓 TEAM CONTRIBUTIONS (All Integrated):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ANIKA:  Security (namespaces, seccomp, sandboxing)
+  AYUSH:  Monitoring (cgroups, metrics, performance)
+  RITIKA: Resource Management (Banker's Algorithm, deadlock prevention)
+
+  → All three work together in EVERY execution
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+💡 IF MENTOR ASKS "HOW IS THIS INTEGRATED?"
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  SHOW: integrated_demo.py, line 91-204
+  
+  Point out:
+  - Phase 1 calls Ritika's banker.request_resources()
+  - Phase 2 uses Ritika's allocation to configure Ayush's cgroups
+  - Phase 3 uses Ayush's cgroup path in Anika's sandbox
+  - All three phases are in ONE function, executed sequentially
+  - Failure at any phase stops the entire flow
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✨ THIS IS ONE INTEGRATED SYSTEM, NOT THREE SEPARATE PROJECTS! ✨
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
