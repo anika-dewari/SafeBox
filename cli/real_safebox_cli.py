@@ -230,6 +230,11 @@ def show_available_apps(executor: 'SystemExecutor') -> list:
             'name': 'calc_with_selftest',
             'path': './src/calc_with_selftest',
             'description': 'Calculator with memory stress test'
+        },
+        {
+            'name': 'custom',
+            'path': 'CUSTOM',
+            'description': '🔧 Run your own custom program'
         }
     ]
     
@@ -270,8 +275,28 @@ def run_job_interactive(executor: 'SystemExecutor'):
             choices=[str(i) for i in range(1, len(apps) + 1)]
         )
         selected_app = apps[app_choice - 1]
-        app_name = selected_app['name']
-        app_path = selected_app['path']
+        
+        # Handle custom program option
+        if selected_app['path'] == 'CUSTOM':
+            console.print("\n[bold yellow]🔧 Custom Program Mode[/bold yellow]")
+            console.print("[dim]Enter the full path to your executable program[/dim]")
+            console.print("[dim]Example: /mnt/c/Users/Dell/Documents/my_program[/dim]")
+            
+            app_path = Prompt.ask("\n[bold]Program path[/bold]")
+            
+            # Verify file exists and is executable
+            import os
+            if not os.path.exists(app_path):
+                console.print(f"[bold red]❌ Error: File not found: {app_path}[/bold red]")
+                return
+            if not os.access(app_path, os.X_OK):
+                console.print(f"[bold yellow]⚠️  Warning: File may not be executable[/bold yellow]")
+            
+            app_name = Prompt.ask("[bold]Job name[/bold]", default=os.path.basename(app_path))
+            console.print(f"\n[green]✓ Custom program: {app_path}[/green]")
+        else:
+            app_name = selected_app['name']
+            app_path = selected_app['path']
         
         # Get resource limits
         console.print(f"\n[bold]Resource Limits for [cyan]{app_name}[/cyan][/bold]")
