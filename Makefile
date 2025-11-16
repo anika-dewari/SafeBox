@@ -1,15 +1,53 @@
-
 CC = gcc
+CXX = g++
 CFLAGS = -Wall -std=c99 -g
-LDFLAGS = -lseccomp # Link against the libseccomp library
-TARGET = build/safebox
+CXXFLAGS = -std=c++17 -g
+LDFLAGS = -lseccomp
+CMAKE = cmake
 
-# Source files
-SRCS = src/main.c src/namespaces.c src/seccomp_policy.c src/cgroups_attach.c 
+# Build directories
+BUILD_DIR = build
+SRC_DIR = src
+CGROUP_DIR = cgroup_agent
 
-.PHONY: all clean install-deps integrated-demo demo-all test-integration help
+# Targets
+SAFEBOX_BIN = $(SRC_DIR)/safebox
+CALC_BIN = $(SRC_DIR)/calc_with_selftest
+TEST_BIN = $(SRC_DIR)/test
+CGROUP_BIN = $(BUILD_DIR)/safebox_cgroup
 
-all: $(TARGET)
+.PHONY: all clean install-deps real-system help build-c build-cpp
+
+all: build-c build-cpp
+
+.PHONY: all clean install-deps real-system help build-c build-cpp
+
+all: build-c build-cpp
+
+# Build C binaries (SafeBox sandbox and test apps)
+build-c:
+	@echo "🔨 Building C components..."
+	@cd $(SRC_DIR) && $(CC) $(CFLAGS) safebox.c -o safebox $(LDFLAGS)
+	@cd $(SRC_DIR) && $(CC) $(CFLAGS) calc_with_selftest.c -o calc_with_selftest
+	@cd $(SRC_DIR) && $(CC) $(CFLAGS) test.c -o test
+	@echo "✅ C binaries built: safebox, calc_with_selftest, test"
+
+# Build C++ cgroup agent
+build-cpp:
+	@echo "🔨 Building C++ cgroup agent..."
+	@mkdir -p $(BUILD_DIR)
+	@cd $(BUILD_DIR) && $(CMAKE) ../$(CGROUP_DIR) && $(MAKE)
+	@echo "✅ C++ cgroup agent built: $(CGROUP_BIN)"
+
+# Build everything for real system
+real-system: all
+	@echo ""
+	@echo "✅ Real System Components Ready!"
+	@echo "   - SafeBox Sandbox: $(SAFEBOX_BIN)"
+	@echo "   - cgroup Agent: $(CGROUP_BIN)"
+	@echo "   - Test Apps: calc_with_selftest, test"
+	@echo ""
+	@echo "🚀 Run with: sudo python3 cli/real_safebox_cli.py"
 
 $(TARGET): $(SRCS)
 	@mkdir -p build
@@ -61,24 +99,29 @@ start-integrated: install-deps
 
 # Show help
 help:
-	@echo "SafeBox Integrated System - Makefile Commands"
-	@echo "=============================================="
+	@echo "╔═══════════════════════════════════════════════════════════╗"
+	@echo "║          SafeBox Real System - Build Commands            ║"
+	@echo "╚═══════════════════════════════════════════════════════════╝"
 	@echo ""
-	@echo "Integration Demos (Show All Three Working Together):"
-	@echo "  make integrated-demo     - Complete integrated system demo"
-	@echo "  make demo-all           - All scenarios interactively"
-	@echo "  make start-integrated   - Start backend + web UI"
+	@echo "🏗️  Build Commands:"
+	@echo "  make all              - Build all components (C + C++)"
+	@echo "  make build-c          - Build SafeBox sandbox + test apps"
+	@echo "  make build-cpp        - Build cgroup agent"
+	@echo "  make real-system      - Build everything for real execution"
 	@echo ""
-	@echo "Individual Component Demos:"
-	@echo "  make demo-banker        - Banker's Algorithm only"
+	@echo "🚀 Run Real System:"
+	@echo "  make install-deps     - Install Python dependencies"
+	@echo "  sudo python3 cli/real_safebox_cli.py"
 	@echo ""
-	@echo "Build & Test:"
-	@echo "  make all               - Build C/C++ components"
-	@echo "  make install-deps      - Install Python dependencies"
-	@echo "  make test-integration  - Run integration tests"
-	@echo "  make clean            - Clean build files"
+	@echo "🧪 Legacy Demos:"
+	@echo "  make integrated-demo  - Complete integrated system demo"
+	@echo "  make demo-all         - All scenarios interactively"
+	@echo "  make demo-banker      - Banker's Algorithm only"
 	@echo ""
-	@echo "Team Member Contributions:"
-	@echo "  RITIKA: Banker Algorithm, Resource Management"
-	@echo "  AYUSH:  cgroups, Monitoring, Performance"
-	@echo "  ANIKA:  Security, Namespaces, seccomp"
+	@echo "🧹 Cleanup:"
+	@echo "  make clean           - Clean build files"
+	@echo ""
+	@echo "📊 System Flow:"
+	@echo "  User Request → Banker's Algorithm → cgroups → SafeBox → App"
+	@echo ""
+	@echo "👥 Team: Ritika (Banker) + Ayush (cgroups) + Anika (Sandbox)"
