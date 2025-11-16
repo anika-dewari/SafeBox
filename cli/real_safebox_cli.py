@@ -299,76 +299,116 @@ def demo_deadlock_prevention(executor: 'SystemExecutor'):
     console.print("[bold red]              DEADLOCK PREVENTION DEMONSTRATION                [/bold red]")
     console.print("[bold bright_white]═══════════════════════════════════════════════════════════════[/bold bright_white]")
     
-    console.print("\n[yellow]This demo runs REAL programs with REAL resource limits.[/yellow]")
-    console.print("[yellow]The Banker's Algorithm will REJECT unsafe requests that could cause deadlock.[/yellow]\n")
+    console.print("\n[yellow]This demo uses REAL programs with resource requirements YOU specify.[/yellow]")
+    console.print("[yellow]The Banker's Algorithm will REJECT unsafe requests in REAL-TIME.[/yellow]\n")
     
-    # Get sleep_job path
-    sleep_job_path = executor.project_root / "src" / "sleep_job"
-    if not sleep_job_path.exists():
-        console.print("[bold red]Error: sleep_job binary not found![/bold red]")
-        console.print(f"Expected at: {sleep_job_path}")
+    # Get available apps
+    apps = show_available_apps(executor)
+    if not apps:
+        console.print("[bold red]No applications available![/bold red]")
         return
     
     console.print("[bold cyan]Step 1: Check initial system state[/bold cyan]")
+    state = executor.get_system_state()
+    total_cpu = state['banker']['total_resources'][0]
+    total_mem = state['banker']['total_resources'][1]
     show_system_state(executor)
     
     input("\n[Press Enter to continue...]")
     
-    # Job 1: Request high resources
-    console.print("\n[bold cyan]Step 2: Submit Job1 with HIGH resource requirements[/bold cyan]")
-    console.print("[yellow]  → Requesting 70% CPU, 700MB RAM[/yellow]")
-    console.print("[yellow]  → This should be GRANTED (system has 100% CPU, 1024MB RAM available)[/yellow]\n")
+    # Job 1: User selects app and resources
+    console.print("\n[bold cyan]Step 2: Submit Job1 - YOU choose the resources![/bold cyan]")
     
-    success1, msg1, job_id1 = executor.request_job(
-        job_name="Job1_HighResource",
-        app_path=str(sleep_job_path),
-        app_args=["5"],
-        cpu_percent=70,
-        memory_mb=700
-    )
-    
-    if success1:
-        console.print(f"[bold green]✅ Job1 GRANTED[/bold green] - {msg1}")
-        console.print(f"[dim]Job ID: {job_id1}[/dim]")
-    else:
-        console.print(f"[bold red]❌ Job1 REJECTED[/bold red] - {msg1}")
-        return
-    
-    console.print("\n[bold cyan]System state after Job1:[/bold cyan]")
-    show_system_state(executor)
-    
-    input("\n[Press Enter to continue...]")
-    
-    # Job 2: Request resources that would cause deadlock
-    console.print("\n[bold red]Step 3: Try to submit Job2 with UNSAFE resource requirements[/bold red]")
-    console.print("[yellow]  → Requesting 50% CPU, 500MB RAM[/yellow]")
-    console.print("[yellow]  → Available: 30% CPU, 324MB RAM[/yellow]")
-    console.print("[red]  → This would leave insufficient resources for ANY job to complete![/red]")
-    console.print("[red]  → Banker's Algorithm should REJECT this to prevent deadlock![/red]\n")
-    
-    success2, msg2, job_id2 = executor.request_job(
-        job_name="Job2_UnsafeRequest",
-        app_path=str(sleep_job_path),
-        app_args=["5"],
-        cpu_percent=50,
-        memory_mb=500
-    )
-    
-    if success2:
-        console.print(f"[bold yellow]⚠️  Job2 was GRANTED[/bold yellow] - {msg2}")
-        console.print("[yellow]The system still found a safe sequence.[/yellow]")
-    else:
-        console.print(f"[bold green]✅ DEADLOCK PREVENTED![/bold green]")
-        console.print(f"[bold red]❌ Job2 REJECTED[/bold red] - {msg2}")
-        console.print("\n[bold green]Why was it rejected?[/bold green]")
-        console.print("[cyan]If we granted Job2's request:[/cyan]")
-        console.print(f"[cyan]  • Available would become: CPU={100-70-50}% (NEGATIVE!), Memory={1024-700-500}MB[/cyan]")
-        console.print(f"[cyan]  • Neither job could get additional resources to complete[/cyan]")
-        console.print(f"[cyan]  • Both would be stuck waiting → DEADLOCK![/cyan]")
-        console.print("\n[bold green]✓ Banker's Algorithm successfully prevented deadlock on REAL system![/bold green]")
-    
-    console.print("\n[bold cyan]Final system state:[/bold cyan]")
-    show_system_state(executor)
+    try:
+        app_choice = IntPrompt.ask(
+            "\n[bold]Select application for Job1[/bold]",
+            choices=[str(i) for i in range(1, len(apps) + 1)]
+        )
+        app1 = apps[app_choice - 1]
+        
+        console.print(f"\n[bold]Resource requirements for Job1 ({app1['name']}):[/bold]")
+        cpu1 = IntPrompt.ask("  CPU percentage (1-100)", default=30)
+        mem1 = IntPrompt.ask("  Memory MB", default=200)
+        
+        console.print(f"\n[yellow]  → Submitting Job1: {app1['name']}[/yellow]")
+        console.print(f"[yellow]  → Resources: {cpu1}% CPU, {mem1}MB RAM[/yellow]")
+        console.print(f"[yellow]  → Available: {total_cpu}% CPU, {total_mem}MB RAM[/yellow]\n")
+        
+        success1, msg1, job_id1 = executor.request_job(
+            job_name=f"Job1_{app1['name']}",
+            app_path=app1['path'],
+            app_args=[],
+            cpu_percent=cpu1,
+            memory_mb=mem1
+        )
+        
+        if success1:
+            console.print(f"[bold green]✅ Job1 GRANTED[/bold green] - {msg1}")
+            console.print(f"[dim]Job ID: {job_id1}[/dim]")
+        else:
+            console.print(f"[bold red]❌ Job1 REJECTED[/bold red] - {msg1}")
+            return
+        
+        console.print("\n[bold cyan]System state after Job1:[/bold cyan]")
+        show_system_state(executor)
+        
+        input("\n[Press Enter to continue...]")
+        
+        # Job 2: User tries another job
+        avail_cpu = total_cpu - cpu1
+        avail_mem = total_mem - mem1
+        
+        console.print("\n[bold cyan]Step 3: Submit Job2 - Try to allocate more resources![/bold cyan]")
+        console.print(f"[yellow]Available NOW: {avail_cpu}% CPU, {avail_mem}MB RAM[/yellow]")
+        console.print("[yellow]TIP: Try requesting MORE than available to see deadlock prevention![/yellow]\n")
+        
+        app_choice2 = IntPrompt.ask(
+            "[bold]Select application for Job2[/bold]",
+            choices=[str(i) for i in range(1, len(apps) + 1)]
+        )
+        app2 = apps[app_choice2 - 1]
+        
+        console.print(f"\n[bold]Resource requirements for Job2 ({app2['name']}):[/bold]")
+        cpu2 = IntPrompt.ask("  CPU percentage (1-100)", default=min(avail_cpu + 20, 100))  # Suggest exceeding
+        mem2 = IntPrompt.ask("  Memory MB", default=avail_mem + 100)
+        
+        console.print(f"\n[yellow]  → Submitting Job2: {app2['name']}[/yellow]")
+        console.print(f"[yellow]  → Requested: {cpu2}% CPU, {mem2}MB RAM[/yellow]")
+        console.print(f"[yellow]  → Available: {avail_cpu}% CPU, {avail_mem}MB RAM[/yellow]")
+        
+        if cpu2 > avail_cpu or mem2 > avail_mem:
+            console.print("[red]  ⚠️  Requesting MORE than available - will likely be REJECTED![/red]\n")
+        
+        success2, msg2, job_id2 = executor.request_job(
+            job_name=f"Job2_{app2['name']}",
+            app_path=app2['path'],
+            app_args=[],
+            cpu_percent=cpu2,
+            memory_mb=mem2
+        )
+        
+        if success2:
+            console.print(f"[bold yellow]⚠️  Job2 was GRANTED[/bold yellow] - {msg2}")
+            console.print("[yellow]The system still found a safe sequence.[/yellow]")
+        else:
+            console.print(f"[bold green]✅ DEADLOCK PREVENTED![/bold green]")
+            console.print(f"[bold red]❌ Job2 REJECTED[/bold red] - {msg2}")
+            console.print("\n[bold green]Why was it rejected?[/bold green]")
+            console.print("[cyan]Banker's Algorithm Analysis:[/cyan]")
+            console.print(f"[cyan]  • Job1 holds: {cpu1}% CPU, {mem1}MB RAM[/cyan]")
+            console.print(f"[cyan]  • Job2 requested: {cpu2}% CPU, {mem2}MB RAM[/cyan]")
+            console.print(f"[cyan]  • Total needed: {cpu1+cpu2}% CPU, {mem1+mem2}MB RAM[/cyan]")
+            console.print(f"[cyan]  • System has: {total_cpu}% CPU, {total_mem}MB RAM[/cyan]")
+            console.print(f"[cyan]  • Would exceed limits → UNSAFE STATE → DEADLOCK![/cyan]")
+            console.print("\n[bold green]✓ Banker's Algorithm successfully prevented deadlock on REAL system![/bold green]")
+        
+        console.print("\n[bold cyan]Final system state:[/bold cyan]")
+        show_system_state(executor)
+        
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Demo cancelled[/yellow]")
+    except Exception as e:
+        console.print(f"\n[bold red]Error: {e}[/bold red]")
     
     input("\n[Press Enter to return to main menu...]")
 
