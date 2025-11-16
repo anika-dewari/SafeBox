@@ -197,14 +197,39 @@ def show_available_apps(executor: 'SystemExecutor') -> list:
     
     apps = [
         {
-            'name': 'calc_with_selftest',
-            'path': './src/calc_with_selftest',
-            'description': 'Calculator with memory stress test'
-        },
-        {
             'name': 'test',
             'path': './src/test',
             'description': 'Simple test program'
+        },
+        {
+            'name': 'sleep_job',
+            'path': './src/sleep_job',
+            'description': 'Sleeps for specified duration'
+        },
+        {
+            'name': 'cpu_intensive',
+            'path': './src/cpu_intensive',
+            'description': 'CPU-bound workload (math operations)'
+        },
+        {
+            'name': 'memory_intensive',
+            'path': './src/memory_intensive',
+            'description': 'Memory-bound workload (allocates RAM)'
+        },
+        {
+            'name': 'io_intensive',
+            'path': './src/io_intensive',
+            'description': 'I/O-bound workload (file operations)'
+        },
+        {
+            'name': 'quick_job',
+            'path': './src/quick_job',
+            'description': 'Fast-completing arithmetic job'
+        },
+        {
+            'name': 'calc_with_selftest',
+            'path': './src/calc_with_selftest',
+            'description': 'Calculator with memory stress test'
         }
     ]
     
