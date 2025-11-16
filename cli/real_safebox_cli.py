@@ -94,7 +94,17 @@ def check_prerequisites():
     """Check and display prerequisites."""
     console.print("\n[bold yellow]» Checking Prerequisites...[/bold yellow]")
     
-    executor = SystemExecutor()
+    # Get actual system resources
+    import psutil
+    total_ram_mb = int(psutil.virtual_memory().total / (1024 * 1024))
+    
+    # Use 80% of system RAM as pool (leave 20% for OS)
+    pool_ram_mb = int(total_ram_mb * 0.8)
+    
+    console.print(f"[dim]Detected system RAM: {total_ram_mb}MB[/dim]")
+    console.print(f"[dim]Using resource pool: 100% CPU, {pool_ram_mb}MB RAM[/dim]")
+    
+    executor = SystemExecutor(total_cpu_percent=100, total_memory_mb=pool_ram_mb)
     ok, msg = executor.check_prerequisites()
     
     if ok:
@@ -140,7 +150,16 @@ def show_system_state(executor: 'SystemExecutor'):
     if banker['is_safe']:
         console.print("\n[bold green]▸ System State: SAFE[/bold green]")
         if banker['safe_sequence']:
-            console.print(f"[dim]Safe Sequence: {' → '.join(banker['safe_sequence'])}[/dim]")
+            # Convert PIDs to process names for display
+            process_dict = banker.get('processes', {})
+            safe_names = []
+            for pid in banker['safe_sequence']:
+                if pid in process_dict:
+                    safe_names.append(process_dict[pid]['name'])
+                else:
+                    safe_names.append(f"P{pid}")
+            if safe_names:
+                console.print(f"[dim]Safe Sequence: {' → '.join(safe_names)}[/dim]")
     else:
         console.print("\n[bold red]▸ System State: UNSAFE (Deadlock possible!)[/bold red]")
     
@@ -269,6 +288,92 @@ def run_job_interactive(executor: 'SystemExecutor'):
 
 
 # ============================================================================
+# DEADLOCK PREVENTION DEMO - REAL SYSTEM
+# ============================================================================
+# This demonstrates REAL deadlock prevention using actual running programs.
+# It shows how Banker's Algorithm rejects unsafe resource requests.
+
+def demo_deadlock_prevention(executor: 'SystemExecutor'):
+    """Demonstrate real deadlock prevention with actual programs."""
+    console.print("\n[bold bright_white]═══════════════════════════════════════════════════════════════[/bold bright_white]")
+    console.print("[bold red]              DEADLOCK PREVENTION DEMONSTRATION                [/bold red]")
+    console.print("[bold bright_white]═══════════════════════════════════════════════════════════════[/bold bright_white]")
+    
+    console.print("\n[yellow]This demo runs REAL programs with REAL resource limits.[/yellow]")
+    console.print("[yellow]The Banker's Algorithm will REJECT unsafe requests that could cause deadlock.[/yellow]\n")
+    
+    # Get sleep_job path
+    sleep_job_path = executor.project_root / "src" / "sleep_job"
+    if not sleep_job_path.exists():
+        console.print("[bold red]Error: sleep_job binary not found![/bold red]")
+        console.print(f"Expected at: {sleep_job_path}")
+        return
+    
+    console.print("[bold cyan]Step 1: Check initial system state[/bold cyan]")
+    show_system_state(executor)
+    
+    input("\n[Press Enter to continue...]")
+    
+    # Job 1: Request high resources
+    console.print("\n[bold cyan]Step 2: Submit Job1 with HIGH resource requirements[/bold cyan]")
+    console.print("[yellow]  → Requesting 70% CPU, 700MB RAM[/yellow]")
+    console.print("[yellow]  → This should be GRANTED (system has 100% CPU, 1024MB RAM available)[/yellow]\n")
+    
+    success1, msg1, job_id1 = executor.request_job(
+        job_name="Job1_HighResource",
+        app_path=str(sleep_job_path),
+        app_args=["5"],
+        cpu_percent=70,
+        memory_mb=700
+    )
+    
+    if success1:
+        console.print(f"[bold green]✅ Job1 GRANTED[/bold green] - {msg1}")
+        console.print(f"[dim]Job ID: {job_id1}[/dim]")
+    else:
+        console.print(f"[bold red]❌ Job1 REJECTED[/bold red] - {msg1}")
+        return
+    
+    console.print("\n[bold cyan]System state after Job1:[/bold cyan]")
+    show_system_state(executor)
+    
+    input("\n[Press Enter to continue...]")
+    
+    # Job 2: Request resources that would cause deadlock
+    console.print("\n[bold red]Step 3: Try to submit Job2 with UNSAFE resource requirements[/bold red]")
+    console.print("[yellow]  → Requesting 50% CPU, 500MB RAM[/yellow]")
+    console.print("[yellow]  → Available: 30% CPU, 324MB RAM[/yellow]")
+    console.print("[red]  → This would leave insufficient resources for ANY job to complete![/red]")
+    console.print("[red]  → Banker's Algorithm should REJECT this to prevent deadlock![/red]\n")
+    
+    success2, msg2, job_id2 = executor.request_job(
+        job_name="Job2_UnsafeRequest",
+        app_path=str(sleep_job_path),
+        app_args=["5"],
+        cpu_percent=50,
+        memory_mb=500
+    )
+    
+    if success2:
+        console.print(f"[bold yellow]⚠️  Job2 was GRANTED[/bold yellow] - {msg2}")
+        console.print("[yellow]The system still found a safe sequence.[/yellow]")
+    else:
+        console.print(f"[bold green]✅ DEADLOCK PREVENTED![/bold green]")
+        console.print(f"[bold red]❌ Job2 REJECTED[/bold red] - {msg2}")
+        console.print("\n[bold green]Why was it rejected?[/bold green]")
+        console.print("[cyan]If we granted Job2's request:[/cyan]")
+        console.print(f"[cyan]  • Available would become: CPU={100-70-50}% (NEGATIVE!), Memory={1024-700-500}MB[/cyan]")
+        console.print(f"[cyan]  • Neither job could get additional resources to complete[/cyan]")
+        console.print(f"[cyan]  • Both would be stuck waiting → DEADLOCK![/cyan]")
+        console.print("\n[bold green]✓ Banker's Algorithm successfully prevented deadlock on REAL system![/bold green]")
+    
+    console.print("\n[bold cyan]Final system state:[/bold cyan]")
+    show_system_state(executor)
+    
+    input("\n[Press Enter to return to main menu...]")
+
+
+# ============================================================================
 # MAIN MENU - THE CONTROL CENTER
 # ============================================================================
 # The main loop that shows options and handles user input.
@@ -283,13 +388,14 @@ def main_menu(executor: 'SystemExecutor'):
         console.print("[bold white]1.[/bold white] [cyan]Show System State[/cyan]")
         console.print("[bold white]2.[/bold white] [green]Run New Job[/green]")
         console.print("[bold white]3.[/bold white] [yellow]List Available Apps[/yellow]")
-        console.print("[bold white]4.[/bold white] [magenta]Refresh Prerequisites[/magenta]")
-        console.print("[bold white]5.[/bold white] [red]Exit[/red]")
+        console.print("[bold white]4.[/bold white] [red]Demo: Deadlock Prevention[/red]")
+        console.print("[bold white]5.[/bold white] [magenta]Refresh Prerequisites[/magenta]")
+        console.print("[bold white]6.[/bold white] [red]Exit[/red]")
         
         try:
             choice = Prompt.ask(
                 "\n[bold]Select option[/bold]",
-                choices=['1', '2', '3', '4', '5'],
+                choices=['1', '2', '3', '4', '5', '6'],
                 default='1'
             )
             
@@ -300,14 +406,16 @@ def main_menu(executor: 'SystemExecutor'):
             elif choice == '3':
                 show_available_apps(executor)
             elif choice == '4':
+                demo_deadlock_prevention(executor)
+            elif choice == '5':
                 executor = check_prerequisites()
                 if not executor:
                     break
-            elif choice == '5':
+            elif choice == '6':
                 console.print("\n[bold cyan]» Exiting SafeBox. Goodbye![/bold cyan]")
                 break
             else:
-                console.print("[bold red]▸ Invalid choice. Please select 1-5.[/bold red]")
+                console.print("[bold red]▸ Invalid choice. Please select 1-6.[/bold red]")
         
         except KeyboardInterrupt:
             console.print("\n\n[bold cyan]» Exiting SafeBox. Goodbye![/bold cyan]")
