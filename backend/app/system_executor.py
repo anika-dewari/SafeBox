@@ -16,6 +16,16 @@ from pathlib import Path
 from .banker import BankerAlgorithm
 
 
+# ============================================================================
+# SYSTEM EXECUTOR - THE INTEGRATION LAYER
+# ============================================================================
+# This class brings together all three team members' work:
+# - Ritika's Banker's Algorithm (decides if request is safe)
+# - Ayush's cgroup agent (enforces resource limits)
+# - Anika's SafeBox sandbox (provides security isolation)
+#
+# It's like a project manager coordinating different departments!
+
 class SystemExecutor:
     """
     Real system executor that integrates all SafeBox components:
@@ -45,6 +55,14 @@ class SystemExecutor:
         
         self.job_counter = 0
         self.active_jobs: Dict[int, Dict] = {}
+    
+    # ========================================================================
+    # PREREQUISITES CHECK
+    # ========================================================================
+    # Before running anything, we need to verify the system is ready:
+    # - Running on Linux (cgroups are Linux-only)
+    # - Running as root (needed for cgroup operations)
+    # - All binaries are built and available
         
     def check_prerequisites(self) -> Tuple[bool, str]:
         """Check if all required components are available."""
@@ -74,6 +92,16 @@ class SystemExecutor:
             return False, "\n".join(errors)
         
         return True, "✅ All prerequisites met"
+    
+    # ========================================================================
+    # JOB EXECUTION - THE MAIN WORKFLOW
+    # ========================================================================
+    # This is where everything comes together! When a user wants to run a job:
+    # 1. First, ask Banker's Algorithm: "Is this safe?"
+    # 2. If yes, create a cgroup (Ayush's code)
+    # 3. Apply resource limits (Ayush's code)
+    # 4. Run in SafeBox sandbox (Anika's code)
+    # 5. Return the output to the user
     
     def request_job(
         self,
@@ -168,6 +196,13 @@ class SystemExecutor:
             self._cleanup_cgroup(cgroup_name)
             return False, f"❌ Execution failed: {str(e)}", None
     
+    # ========================================================================
+    # CGROUP OPERATIONS - AYUSH'S CODE INTEGRATION
+    # ========================================================================
+    # These functions call the C++ cgroup agent binary to create groups
+    # and apply resource limits. The cgroup agent writes to actual kernel
+    # files at /sys/fs/cgroup/
+    
     def _create_cgroup(self, cgroup_name: str) -> bool:
         """Create a new cgroup."""
         try:
@@ -219,6 +254,14 @@ class SystemExecutor:
             print(f"⚠️  Warning: Failed to apply memory limit: {e.stderr}")
             return False
     
+    # ========================================================================
+    # SANDBOX EXECUTION - ANIKA'S CODE INTEGRATION
+    # ========================================================================
+    # This runs the application inside SafeBox sandbox, which provides:
+    # - Namespace isolation (can't see other processes)
+    # - Seccomp filtering (can only use safe system calls)
+    # - Security boundaries (can't escape the sandbox)
+    
     def _run_in_sandbox(self, cgroup_name: str, app_path: str, app_args: List[str]) -> str:
         """Run application in SafeBox sandbox."""
         try:
@@ -255,6 +298,14 @@ class SystemExecutor:
         except Exception as e:
             print(f"⚠️  Warning: Failed to cleanup cgroup: {e}")
     
+    # ========================================================================
+    # RESOURCE CLEANUP
+    # ========================================================================
+    # After a job completes, we need to clean up:
+    # - Tell Banker's Algorithm to free up the resources
+    # - Delete the cgroup directory
+    # - Remove job from our tracking
+    
     def release_job(self, job_id: int) -> Tuple[bool, str]:
         """Release resources for a completed job."""
         if job_id not in self.active_jobs:
@@ -273,6 +324,14 @@ class SystemExecutor:
         del self.active_jobs[job_id]
         
         return success, f"✅ Released job {job_id}: {msg}"
+    
+    # ========================================================================
+    # SYSTEM MONITORING & REPORTING
+    # ========================================================================
+    # Functions to get information about what's currently happening:
+    # - How many resources are available?
+    # - Which jobs are running?
+    # - Is the system in a safe state?
     
     def get_system_state(self) -> Dict:
         """Get current system state."""

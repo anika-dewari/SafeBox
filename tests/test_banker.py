@@ -21,6 +21,14 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'backend'))
 from app.banker import BankerAlgorithm, ProcessState, create_example_scenario
 
 
+# ============================================================================
+# BASIC FUNCTIONALITY TESTS
+# ============================================================================
+# These tests verify that the fundamental operations work correctly:
+# - Can we create a Banker system?
+# - Can we add processes?
+# - Does it reject invalid inputs?
+
 class TestBankerAlgorithmBasics:
     """Test basic banker algorithm initialization and setup"""
     
@@ -57,6 +65,11 @@ class TestBankerAlgorithmBasics:
         assert result is False
 
 
+# ============================================================================
+# RESOURCE ALLOCATION TESTS
+# Tests the core Banker's Algorithm functionality for granting/denying requests.
+# Like testing whether a bank approves or rejects loan applications correctly.
+# ============================================================================
 class TestResourceAllocation:
     """Test resource allocation and request handling"""
     
@@ -111,6 +124,11 @@ class TestResourceAllocation:
         assert "unsafe state" in msg.lower() or "deadlock" in msg.lower()
 
 
+# ============================================================================
+# RESOURCE RELEASE TESTS
+# Tests that processes can return resources properly after they're done.
+# Like customers returning borrowed items back to the bank's vault.
+# ============================================================================
 class TestResourceRelease:
     """Test resource release functionality"""
     
@@ -137,6 +155,11 @@ class TestResourceRelease:
         assert "cannot release more" in msg.lower()
 
 
+# ============================================================================
+# SAFETY ALGORITHM TESTS - THE CORE!
+# Tests the heart of deadlock prevention: checking if state is safe.
+# Safe state = we can find a sequence to finish all processes without deadlock.
+# ============================================================================
 class TestSafetyAlgorithm:
     """Test safety algorithm and safe state detection"""
     
@@ -179,6 +202,11 @@ class TestSafetyAlgorithm:
         assert sequence == []
 
 
+# ============================================================================
+# PROCESS MANAGEMENT TESTS
+# Tests adding and removing processes (customers) from the system.
+# Like managing customer accounts - opening new ones, closing old ones.
+# ============================================================================
 class TestProcessManagement:
     """Test process lifecycle management"""
     
@@ -205,6 +233,11 @@ class TestProcessManagement:
         assert success is False
 
 
+# ============================================================================
+# SYSTEM STATE REPORTING TESTS
+# Tests that we can get accurate snapshots of the entire system.
+# Like generating a complete financial report of the bank's current status.
+# ============================================================================
 class TestSystemState:
     """Test system state reporting"""
     
@@ -225,6 +258,11 @@ class TestSystemState:
         assert state['resource_names'] == ['CPU', 'Memory', 'Disk']
 
 
+# ============================================================================
+# SCENARIO SIMULATION TESTS
+# Tests realistic multi-step scenarios (sequences of requests/releases).
+# Like simulating a full business day at the bank with multiple transactions.
+# ============================================================================
 class TestScenarioSimulation:
     """Test scenario simulation"""
     
@@ -246,6 +284,11 @@ class TestScenarioSimulation:
         assert all('state_after' in r for r in results)
 
 
+# ============================================================================
+# DEADLOCK DETECTION TESTS
+# Tests that we can identify when a deadlock has occurred.
+# Different from prevention - this detects existing deadlocks, not prevents them.
+# ============================================================================
 class TestDeadlockDetection:
     """Test deadlock detection"""
     
@@ -272,6 +315,11 @@ class TestDeadlockDetection:
         assert is_deadlock is True or len(deadlocked) > 0
 
 
+# ============================================================================
+# EXAMPLE SCENARIO TESTS
+# Tests using a pre-defined example scenario (created by create_example_scenario).
+# Useful for demonstrating the system with consistent test data.
+# ============================================================================
 class TestExampleScenario:
     """Test the example scenario"""
     
@@ -292,6 +340,11 @@ class TestExampleScenario:
         assert len(sequence) > 0
 
 
+# ============================================================================
+# EDGE CASES & BOUNDARY TESTS
+# Tests unusual or extreme situations: zero resources, impossible requests, etc.
+# Like stress-testing the bank system with weird scenarios it rarely encounters.
+# ============================================================================
 class TestEdgeCases:
     """Test edge cases and boundary conditions"""
     
@@ -325,6 +378,11 @@ class TestEdgeCases:
 
 
 # Integration tests
+# ============================================================================
+# INTEGRATION TESTS
+# Tests complete end-to-end workflows combining multiple operations.
+# Like testing a customer's complete journey: open account → borrow → return → close.
+# ============================================================================
 class TestIntegration:
     """Integration tests for complete workflows"""
     

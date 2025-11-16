@@ -22,6 +22,12 @@ from rich.prompt import Prompt, IntPrompt, Confirm
 from rich.text import Text
 from rich import box
 
+# ============================================================================
+# SETUP: Import the system executor (connects to Banker's Algorithm backend)
+# ============================================================================
+# This handles the import in a way that works even when running with sudo,
+# which sometimes messes up Python's module paths.
+
 # Add backend to path robustly
 backend_path = Path(__file__).resolve().parent.parent / 'backend'
 sys.path.insert(0, str(backend_path))
@@ -43,6 +49,12 @@ except Exception:
 
 console = Console()
 
+
+# ============================================================================
+# BANNER & UI DISPLAY
+# ============================================================================
+# Beautiful ASCII art and styling to make the CLI look professional.
+# Using Rich library for colors, tables, and formatted output.
 
 def print_banner():
     """Print SafeBox banner with beautiful ASCII art."""
@@ -97,6 +109,12 @@ def check_prerequisites():
         return None
 
 
+# ============================================================================
+# SYSTEM STATE DISPLAY
+# ============================================================================
+# Shows what's happening right now: how many resources are available,
+# which jobs are running, and whether the system is in a safe state.
+
 def show_system_state(executor: 'SystemExecutor'):
     """Display current system state."""
     console.print("\n[bold bright_white]═══════════════════════════════════════════════════════════════[/bold bright_white]")
@@ -146,6 +164,12 @@ def show_system_state(executor: 'SystemExecutor'):
         console.print("\n[dim]No active jobs[/dim]")
 
 
+# ============================================================================
+# APPLICATION LISTING
+# ============================================================================
+# Shows the test programs that can be run. These are real compiled C programs
+# that will execute with actual resource limits.
+
 def show_available_apps(executor: 'SystemExecutor') -> list:
     """Display available applications."""
     console.print("\n[bold bright_white]═══════════════════════════════════════════════════════════════[/bold bright_white]")
@@ -176,6 +200,15 @@ def show_available_apps(executor: 'SystemExecutor') -> list:
     console.print(table)
     return apps
 
+
+# ============================================================================
+# JOB SUBMISSION - THE MAIN FEATURE!
+# ============================================================================
+# This is where users submit jobs. The system will:
+# 1. Ask what program to run
+# 2. Ask for CPU and memory limits
+# 3. Check with Banker's Algorithm if it's safe
+# 4. If safe, create real cgroups and run the program!
 
 def run_job_interactive(executor: 'SystemExecutor'):
     """Interactive job submission."""
@@ -260,6 +293,12 @@ def run_job_interactive(executor: 'SystemExecutor'):
         console.print(f"\n[bold red]Error: {e}[/bold red]")
 
 
+# ============================================================================
+# MAIN MENU - THE CONTROL CENTER
+# ============================================================================
+# The main loop that shows options and handles user input.
+# Users can check system state, run jobs, or exit.
+
 def main_menu(executor: 'SystemExecutor'):
     """Main interactive menu."""
     while True:
@@ -304,6 +343,12 @@ def main_menu(executor: 'SystemExecutor'):
         except Exception as e:
             console.print(f"[bold red]▸ Error: {e}[/bold red]")
 
+
+# ============================================================================
+# PROGRAM ENTRY POINT
+# ============================================================================
+# This is where the program starts. It shows the banner, checks if everything
+# is ready (Linux, root access, binaries built), then launches the main menu.
 
 def main():
     """Main entry point."""

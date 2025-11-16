@@ -13,6 +13,13 @@ from dataclasses import dataclass
 import copy
 
 
+# ============================================================================
+# DATA STRUCTURES
+# ============================================================================
+# These classes store information about each process and what resources
+# it needs. Think of it like keeping track of each customer's order and
+# what ingredients they still need.
+
 @dataclass
 class ProcessState:
     """Represents the resource state of a single process"""
@@ -22,6 +29,12 @@ class ProcessState:
     allocated: List[int]       # Currently allocated resources
     need: List[int]            # Still needed resources (max - allocated)
 
+
+# ============================================================================
+# BANKER'S ALGORITHM CLASS
+# ============================================================================
+# This is the main class that acts like a bank manager, deciding whether
+# to approve or reject resource requests based on safety analysis.
 
 class BankerAlgorithm:
     """
@@ -45,7 +58,13 @@ class BankerAlgorithm:
         self.processes: Dict[int, ProcessState] = {}
         self.available = total_resources.copy()
         self.history: List[Dict] = []
-        
+    
+    # ========================================================================
+    # PROCESS MANAGEMENT
+    # ========================================================================
+    # Functions to add new processes and track what resources they need.
+    # Like registering new customers in our bank system.
+    
     def add_process(self, pid: int, name: str, max_resources: List[int]) -> bool:
         """
         Add a new process to the system.
@@ -74,6 +93,13 @@ class BankerAlgorithm:
             need=max_resources.copy()
         )
         return True
+    
+    # ========================================================================
+    # RESOURCE REQUEST HANDLING - THE CORE LOGIC!
+    # ========================================================================
+    # This is where the magic happens. When a process asks for resources,
+    # we check: "If I give this, will the system still be safe?"
+    # Like a bank checking if giving a loan will leave them with enough cash.
     
     def request_resources(self, pid: int, request: List[int]) -> Tuple[bool, str]:
         """
@@ -161,6 +187,13 @@ class BankerAlgorithm:
         
         return True, "Resources released successfully"
     
+    # ========================================================================
+    # SAFETY ALGORITHM - THE HEART OF DEADLOCK PREVENTION
+    # ========================================================================
+    # This function checks if there's a way for all processes to finish.
+    # It tries to find a "safe sequence" - an order where everyone can complete.
+    # Think of it like: "Can I arrange the work schedule so everyone finishes?"
+    
     def is_safe_state(self) -> Tuple[bool, List[int]]:
         """
         Check if the system is in a safe state using safety algorithm.
@@ -199,6 +232,13 @@ class BankerAlgorithm:
                 return False, []
         
         return True, safe_sequence
+    
+    # ========================================================================
+    # SYSTEM STATE REPORTING
+    # ========================================================================
+    # Functions to get information about the current state of the system.
+    # Like generating a report showing what resources are available and
+    # which processes are running.
     
     def get_system_state(self) -> Dict:
         """
@@ -282,6 +322,13 @@ class BankerAlgorithm:
                 break
         
         return results
+    
+    # ========================================================================
+    # DEADLOCK DETECTION
+    # ========================================================================
+    # While the Banker's Algorithm PREVENTS deadlock, this function can
+    # detect if a deadlock has already occurred (useful for debugging).
+    # It's like checking: "Are we stuck? Is anyone actually deadlocked?"
     
     def detect_deadlock(self) -> Tuple[bool, List[int]]:
         """
