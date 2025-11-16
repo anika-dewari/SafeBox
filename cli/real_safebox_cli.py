@@ -246,46 +246,21 @@ def run_job_interactive(executor: 'SystemExecutor'):
         
         # Submit job
         console.print("\n[bold green]» Submitting Job...[/bold green]")
-        result = executor.request_job(
+        success, message, job_id = executor.request_job(
+            job_name=app_name,
             app_path=app_path,
-            cpu_limit=cpu_limit,
-            mem_limit=mem_limit
+            app_args=[],
+            cpu_percent=cpu_limit,
+            memory_mb=mem_limit
         )
         
-        if result['status'] == 'success':
-            job_id = result['job_id']
-            console.print(f"\n[bold green]▸ Job Completed Successfully[/bold green]")
+        if success:
+            console.print(f"\n[bold green]✅ Job Completed Successfully[/bold green]")
             console.print(f"[dim]Job ID: {job_id}[/dim]")
-            
-            # Show output
-            console.print("\n[bold cyan]───────────────────────────────────────────────────────────────[/bold cyan]")
-            console.print("[bold white]APPLICATION OUTPUT[/bold white]")
-            console.print("[bold cyan]───────────────────────────────────────────────────────────────[/bold cyan]")
-            console.print(result['output'])
-            console.print("[bold cyan]───────────────────────────────────────────────────────────────[/bold cyan]")
-            
-            # Show metrics
-            if 'metrics' in result:
-                metrics = result['metrics']
-                metrics_table = Table(title="Resource Usage", box=box.SIMPLE)
-                metrics_table.add_column("Metric", style="cyan")
-                metrics_table.add_column("Value", style="green")
-                
-                metrics_table.add_row("Execution Time", f"{metrics.get('execution_time', 0):.2f}s")
-                metrics_table.add_row("CPU Used", f"{metrics.get('cpu_percent', 0):.1f}%")
-                metrics_table.add_row("Memory Used", f"{metrics.get('memory_mb', 0):.1f}MB")
-                
-                console.print("\n", metrics_table)
-            
-            # Release resources
-            executor.release_job(job_id)
-            console.print("\n[dim]Resources released[/dim]")
-            
+            console.print(f"\n[green]{message}[/green]")
         else:
-            console.print(f"\n[bold red]▸ Job Failed: {result['error']}[/bold red]")
-            
-            if 'reason' in result:
-                console.print(f"[yellow]Reason: {result['reason']}[/yellow]")
+            console.print(f"\n[bold red]❌ Job Failed[/bold red]")
+            console.print(f"[red]{message}[/red]")
     
     except KeyboardInterrupt:
         console.print("\n[yellow]Job submission cancelled[/yellow]")
