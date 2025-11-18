@@ -41,12 +41,12 @@
 #define STACK_SIZE (1024 * 1024)
 static char child_stack[STACK_SIZE];
 
-static const char *CGROUP_V1_BASE = "/sys/fs/cgroup/memory";
-static const char *CGROUP_NAME = "safebox";
+static const char *CGROUP_V1_BASE = "/sys/fs/cgroup/memory"; //Inside this directory, each sandbox (or application) can create its own sub-folder to control memory usage.
+static const char *CGROUP_NAME = "safebox"; //When the sandbox starts, it creates a cgroup with this name.
 
 /* write a string to a file path, return 0 on success */
 static int write_file(const char *path, const char *content) {
-    int fd = open(path, O_WRONLY | O_CLOEXEC);
+    int fd = open(path, O_WRONLY | O_CLOEXEC); //open in write only and automatically closes the files on execute command
     if (fd < 0) return -1;
     ssize_t w = write(fd, content, strlen(content));
     close(fd);
@@ -69,12 +69,12 @@ static int setup_cgroup_for_pid(pid_t pid, size_t memory_limit_bytes) {
 
     if (is_cgroup_v2()) {
         // cgroup v2 unified hierarchy
-        snprintf(path, sizeof(path), "/sys/fs/cgroup/%s", CGROUP_NAME);
+        snprintf(path, sizeof(path), "/sys/fs/cgroup/%s", CGROUP_NAME); //create cgroup directory
         if (mkdir(path, 0755) < 0 && errno != EEXIST) {
             perror("mkdir(cgroup v2)");
             return -1;
         }
-        if (memory_limit_bytes > 0) {
+        if (memory_limit_bytes > 0) { //set memory limit
             char mempath[512];
             snprintf(mempath, sizeof(mempath), "%s/memory.max", path);
             snprintf(tmp, sizeof(tmp), "%zu", memory_limit_bytes);
@@ -256,17 +256,17 @@ SCMP_SYS(sched_get_priority_min),
 /* Drop privileges to nobody:nogroup and optionally chroot (pass NULL to skip chroot) */
 static int drop_privileges_and_chroot(const char *new_root) {
     if (new_root) {
-        if (chdir(new_root) != 0) {
+        if (chdir(new_root) != 0) { //Moves the current working directory into the directory that will become root.
             perror("chdir new_root");
             return -1;
         }
-        if (chroot(new_root) != 0) {
+        if (chroot(new_root) != 0) { //Changes the process’s root directory (/) to new_root.
             perror("chroot");
             return -1;
         }
     }
 
-    struct passwd *pw = getpwnam("nobody");
+    struct passwd *pw = getpwnam("nobody"); //Fetches UID/GID of the Linux user nobody.
     if (!pw) {
         fprintf(stderr, "user 'nobody' not found\n");
         return -1;
